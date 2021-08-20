@@ -1,5 +1,7 @@
 package store
 
+//go:generate mockery --name=Store --inpackage --case underscore
+
 type Store interface {
 	Has(key string) bool
 	Get(key string) (string, bool)

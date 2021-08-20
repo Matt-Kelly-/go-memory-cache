@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/Matt-Kelly-/go-memory-cache/api";
+
+package api;
+
+// The cache service definition.
+service Cache {
+  rpc Has (HasRequest) returns (HasResponse) {}
+}
+
+message HasRequest {
+  string key = 1;
+}
+
+message HasResponse {
+  bool exists = 1;
+}
