@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"os"
 )
 
 const (
@@ -16,6 +17,8 @@ const (
 func main() {
 	cacheStore := store.NewStore()
 
+	logger := log.New(os.Stdout, "Server ", log.LstdFlags)
+
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
@@ -23,7 +26,7 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	api.RegisterCacheServer(grpcServer, server.NewServer(cacheStore))
+	api.RegisterCacheServer(grpcServer, server.NewServer(cacheStore, logger))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
