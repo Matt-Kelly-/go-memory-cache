@@ -15,7 +15,24 @@ const (
 )
 
 func main() {
+	args := os.Args[1:]
+	storeType := ""
+	if len(args) > 0 {
+		storeType = args[0]
+	}
+
 	cacheStore := store.NewStore()
+
+	switch storeType {
+	case "mutex":
+		log.Print("Protecting store with mutex")
+		cacheStore = store.WithMutex(cacheStore)
+	case "rwmutex":
+		log.Print("Protecting store with rw mutex")
+		cacheStore = store.WithRWMutex(cacheStore)
+	default:
+		log.Print("Leaving store unprotected")
+	}
 
 	logger := log.New(os.Stdout, "Server ", log.LstdFlags)
 
