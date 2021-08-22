@@ -8,6 +8,18 @@ import (
 	"testing"
 )
 
+func createDefaultStore() store.Store {
+	return store.NewStore()
+}
+
+func createStoreWithMutexDecorator() store.Store {
+	return store.WithMutex(store.NewStore())
+}
+
+func createStoreWithRWMutexDecorator() store.Store {
+	return store.WithRWMutex(store.NewStore())
+}
+
 type storeTestSuite struct {
 	suite.Suite
 
@@ -198,4 +210,253 @@ func TestRWMutexDecoratorLocking(t *testing.T) {
 			return store.WithRWMutex(store.NewStore())
 		},
 	})
+}
+
+func benchmarkHas(b *testing.B, createStore func() store.Store) {
+	b.Run("serial miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Has(testKey)
+		}
+	})
+
+	b.Run("serial hit", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testStore.Put(testKey, "test value")
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Has(testKey)
+		}
+	})
+
+	b.Run("parallel miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Has(testKey)
+			}
+		})
+	})
+
+	b.Run("parallel hit", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testStore.Put(testKey, "test value")
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Has(testKey)
+			}
+		})
+	})
+
+	b.Run("parallel mixed", func(b *testing.B) {
+		testStore := createStore()
+		testKeys := []string{"test key 1", "test key 2"}
+		testStore.Put(testKeys[0], "test value")
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			index := 0
+			for pb.Next() {
+				index = (index + 1) % 2
+				testStore.Has(testKeys[index])
+			}
+		})
+	})
+}
+
+func benchmarkGet(b *testing.B, createStore func() store.Store) {
+	b.Run("serial miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Get(testKey)
+		}
+	})
+
+	b.Run("serial hit", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testStore.Put(testKey, "test value")
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Get(testKey)
+		}
+	})
+
+	b.Run("parallel miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Get(testKey)
+			}
+		})
+	})
+
+	b.Run("parallel hit", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testStore.Put(testKey, "test value")
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Get(testKey)
+			}
+		})
+	})
+
+	b.Run("parallel mixed", func(b *testing.B) {
+		testStore := createStore()
+		testKeys := []string{"test key 1", "test key 2"}
+		testStore.Put(testKeys[0], "test value")
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			index := 0
+			for pb.Next() {
+				index = (index + 1) % 2
+				testStore.Get(testKeys[index])
+			}
+		})
+	})
+}
+
+func benchmarkPut(b *testing.B, createStore func() store.Store) {
+	b.Run("serial miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testValue := "test value"
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Put(testKey, testValue)
+		}
+	})
+
+	b.Run("serial hit", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testValue := "test value"
+		testStore.Put(testKey, testValue)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Put(testKey, testValue)
+		}
+	})
+
+	b.Run("parallel miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testValue := "test value"
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Put(testKey, testValue)
+			}
+		})
+	})
+
+	b.Run("parallel hit", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		testValue := "test value"
+		testStore.Put(testKey, testValue)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Put(testKey, testValue)
+			}
+		})
+	})
+
+	b.Run("parallel mixed", func(b *testing.B) {
+		testStore := createStore()
+		testKeys := []string{"test key 1", "test key 2"}
+		testValues := []string{"test value 1", "test value 2"}
+		testStore.Put(testKeys[0], testValues[0])
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			index := 0
+			for pb.Next() {
+				index = (index + 1) % 2
+				testStore.Put(testKeys[index], testValues[index])
+			}
+		})
+	})
+}
+
+func benchmarkDelete(b *testing.B, createStore func() store.Store) {
+	b.Run("serial miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			testStore.Delete(testKey)
+		}
+	})
+
+	b.Run("parallel miss", func(b *testing.B) {
+		testStore := createStore()
+		testKey := "test key"
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				testStore.Delete(testKey)
+			}
+		})
+	})
+}
+
+func BenchmarkDefaultStoreHas(b *testing.B) {
+	benchmarkHas(b, createDefaultStore)
+}
+
+func BenchmarkDefaultStoreGet(b *testing.B) {
+	benchmarkGet(b, createDefaultStore)
+}
+
+func BenchmarkDefaultStorePut(b *testing.B) {
+	benchmarkPut(b, createDefaultStore)
+}
+
+func BenchmarkDefaultStoreDelete(b *testing.B) {
+	benchmarkDelete(b, createDefaultStore)
+}
+
+func BenchmarkMutexDecoratorHas(b *testing.B) {
+	benchmarkHas(b, createStoreWithMutexDecorator)
+}
+
+func BenchmarkMutexDecoratorGet(b *testing.B) {
+	benchmarkGet(b, createStoreWithMutexDecorator)
+}
+
+func BenchmarkMutexDecoratorPut(b *testing.B) {
+	benchmarkPut(b, createStoreWithMutexDecorator)
+}
+
+func BenchmarkMutexDecoratorDelete(b *testing.B) {
+	benchmarkDelete(b, createStoreWithMutexDecorator)
+}
+
+func BenchmarkRWMutexDecoratorHas(b *testing.B) {
+	benchmarkHas(b, createStoreWithRWMutexDecorator)
+}
+
+func BenchmarkRWMutexDecoratorGet(b *testing.B) {
+	benchmarkGet(b, createStoreWithRWMutexDecorator)
+}
+
+func BenchmarkRWMutexDecoratorPut(b *testing.B) {
+	benchmarkPut(b, createStoreWithRWMutexDecorator)
+}
+
+func BenchmarkRWMutexDecoratorDelete(b *testing.B) {
+	benchmarkDelete(b, createStoreWithRWMutexDecorator)
 }
