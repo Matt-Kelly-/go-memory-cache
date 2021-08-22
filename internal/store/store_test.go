@@ -324,7 +324,7 @@ func benchmarkGet(b *testing.B, createStore func() store.Store) {
 	})
 }
 
-func benchmarkPut(b *testing.B, createStore func() store.Store) {
+func benchmarkPut(b *testing.B, createStore func() store.Store, parallel bool) {
 	b.Run("serial miss", func(b *testing.B) {
 		testStore := createStore()
 		testKey := "test key"
@@ -345,6 +345,10 @@ func benchmarkPut(b *testing.B, createStore func() store.Store) {
 			testStore.Put(testKey, testValue)
 		}
 	})
+
+	if !parallel {
+		return
+	}
 
 	b.Run("parallel miss", func(b *testing.B) {
 		testStore := createStore()
@@ -387,7 +391,7 @@ func benchmarkPut(b *testing.B, createStore func() store.Store) {
 	})
 }
 
-func benchmarkDelete(b *testing.B, createStore func() store.Store) {
+func benchmarkDelete(b *testing.B, createStore func() store.Store, parallel bool) {
 	b.Run("serial miss", func(b *testing.B) {
 		testStore := createStore()
 		testKey := "test key"
@@ -396,6 +400,10 @@ func benchmarkDelete(b *testing.B, createStore func() store.Store) {
 			testStore.Delete(testKey)
 		}
 	})
+
+	if !parallel {
+		return
+	}
 
 	b.Run("parallel miss", func(b *testing.B) {
 		testStore := createStore()
@@ -418,11 +426,11 @@ func BenchmarkDefaultStoreGet(b *testing.B) {
 }
 
 func BenchmarkDefaultStorePut(b *testing.B) {
-	benchmarkPut(b, createDefaultStore)
+	benchmarkPut(b, createDefaultStore, false)
 }
 
 func BenchmarkDefaultStoreDelete(b *testing.B) {
-	benchmarkDelete(b, createDefaultStore)
+	benchmarkDelete(b, createDefaultStore, false)
 }
 
 func BenchmarkMutexDecoratorHas(b *testing.B) {
@@ -434,11 +442,11 @@ func BenchmarkMutexDecoratorGet(b *testing.B) {
 }
 
 func BenchmarkMutexDecoratorPut(b *testing.B) {
-	benchmarkPut(b, createStoreWithMutexDecorator)
+	benchmarkPut(b, createStoreWithMutexDecorator, true)
 }
 
 func BenchmarkMutexDecoratorDelete(b *testing.B) {
-	benchmarkDelete(b, createStoreWithMutexDecorator)
+	benchmarkDelete(b, createStoreWithMutexDecorator, true)
 }
 
 func BenchmarkRWMutexDecoratorHas(b *testing.B) {
@@ -450,9 +458,9 @@ func BenchmarkRWMutexDecoratorGet(b *testing.B) {
 }
 
 func BenchmarkRWMutexDecoratorPut(b *testing.B) {
-	benchmarkPut(b, createStoreWithRWMutexDecorator)
+	benchmarkPut(b, createStoreWithRWMutexDecorator, true)
 }
 
 func BenchmarkRWMutexDecoratorDelete(b *testing.B) {
-	benchmarkDelete(b, createStoreWithRWMutexDecorator)
+	benchmarkDelete(b, createStoreWithRWMutexDecorator, true)
 }
