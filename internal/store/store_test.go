@@ -1,9 +1,11 @@
 package store_test
 
 import (
+	"fmt"
 	"github.com/Matt-Kelly-/go-memory-cache/internal/store"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"math/rand"
 	"sync"
 	"testing"
 )
@@ -417,6 +419,30 @@ func benchmarkDelete(b *testing.B, createStore func() store.Store, parallel bool
 	})
 }
 
+func benchmarkReadWrite(b *testing.B, createStore func() store.Store) {
+	testKey := "test key"
+	testValue := "test value"
+
+	// Test 0% to 100% reads in increments of 10%
+	for i := 0; i <= 10; i++ {
+		b.Run(fmt.Sprintf("%v%% reads", i*10), func(b *testing.B) {
+			testStore := createStore()
+			b.ResetTimer()
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					if i > rand.Intn(10) {
+						// Read
+						testStore.Get(testKey)
+					} else {
+						// Write
+						testStore.Put(testKey, testValue)
+					}
+				}
+			})
+		})
+	}
+}
+
 func BenchmarkDefaultStoreHas(b *testing.B) {
 	benchmarkHas(b, createDefaultStore)
 }
@@ -449,6 +475,10 @@ func BenchmarkMutexDecoratorDelete(b *testing.B) {
 	benchmarkDelete(b, createStoreWithMutexDecorator, true)
 }
 
+func BenchmarkMutexDecoratorReadWrite(b *testing.B) {
+	benchmarkReadWrite(b, createStoreWithMutexDecorator)
+}
+
 func BenchmarkRWMutexDecoratorHas(b *testing.B) {
 	benchmarkHas(b, createStoreWithRWMutexDecorator)
 }
@@ -463,4 +493,8 @@ func BenchmarkRWMutexDecoratorPut(b *testing.B) {
 
 func BenchmarkRWMutexDecoratorDelete(b *testing.B) {
 	benchmarkDelete(b, createStoreWithRWMutexDecorator, true)
+}
+
+func BenchmarkRWMutexDecoratorReadWrite(b *testing.B) {
+	benchmarkReadWrite(b, createStoreWithRWMutexDecorator)
 }
