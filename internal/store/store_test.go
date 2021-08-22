@@ -198,17 +198,13 @@ func (suite *storeLockingTestSuite) TestLocking() {
 
 func TestMutexDecoratorLocking(t *testing.T) {
 	suite.Run(t, &storeLockingTestSuite{
-		createStore: func() store.Store {
-			return store.WithMutex(store.NewStore())
-		},
+		createStore: createStoreWithMutexDecorator,
 	})
 }
 
 func TestRWMutexDecoratorLocking(t *testing.T) {
 	suite.Run(t, &storeLockingTestSuite{
-		createStore: func() store.Store {
-			return store.WithRWMutex(store.NewStore())
-		},
+		createStore: createStoreWithRWMutexDecorator,
 	})
 }
 
