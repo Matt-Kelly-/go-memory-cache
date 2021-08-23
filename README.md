@@ -8,7 +8,7 @@ A simple in-memory cache with GRPC API. This is a toy project to help me learn G
 - `Put` Sets the value for a key.
 - `Delete` Deletes the value for a key.
 
-I wanted to try different approaches to synchronisation, so the default cache store has no protection. I used the decorator pattern to create 2 wrappers to protect the cache with `sync.Mutex` and `sync.RWMutex` respectively.
+I wanted to try different approaches to synchronisation, so the default cache store has no protection. I used the decorator pattern to create 2 wrappers to protect the cache with `sync.Mutex` and `sync.RWMutex` respectively. I then [benchmarked](docs/benchmarks) each of the wrappers.
 
 ### Built With
 - [GRPC](https://grpc.io/)
